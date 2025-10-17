@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Яндекс Таблицы</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .sheet-item {
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .sheet-item:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .sheet-item.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        .success-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #28a745;
+        }
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шаг 1: Ввод ссылки -->
+        <div id="step1" class="step active">
+            <h1>🔗 Подключение таблицы</h1>
+            <div class="input-group">
+                <label for="tableUrl">Ссылка на Яндекс Таблицу:</label>
+                <input type="url" id="tableUrl" placeholder="https://disk.yandex.ru/..." />
+            </div>
+            <button onclick="analyzeTable()">🔍 Анализировать таблицу</button>
+        </div>
+
+        <!-- Шаг 2: Выбор листа -->
+        <div id="step2" class="step">
+            <h1>📋 Выбор листа</h1>
+            <div id="sheetList"></div>
+            <button onclick="showDataForm()">✅ Выбрать лист</button>
+            <button onclick="showStep(1)" style="background: #6c757d; margin-top: 10px;">← Назад</button>
+        </div>
+
+        <!-- Шаг 3: Форма данных -->
+        <div id="step3" class="step">
+            <h1>📝 Заполнение данных</h1>
+            <form id="dataForm">
+                <div class="input-group">
+                    <label>👤 ФИО:</label>
+                    <input type="text" name="fio" placeholder="Иванов Иван Иванович" required>
+                </div>
+                <div class="input-group">
+                    <label>📅 Дата:</label>
+                    <input type="date" name="date" required>
+                </div>
+                <div class="input-group">
+                    <label>⏰ Время:</label>
+                    <input type="time" name="time" required>
+                </div>
+                <div class="input-group">
+                    <label>🎯 Тема:</label>
+                    <select name="topic" required>
+                        <option value="">Выберите тему</option>
+                        <option value="Лекция">Лекция</option>
+                        <option value="Семинар">Семинар</option>
+                        <option value="Консультация">Консультация</option>
+                        <option value="Встреча">Встреча</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>📊 Статус:</label>
+                    <select name="status" required>
+                        <option value="">Выберите статус</option>
+                        <option value="Запланировано">Запланировано</option>
+                        <option value="Выполнено">Выполнено</option>
+                        <option value="Отменено">Отменено</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>📝 Примечание:</label>
+                    <textarea name="note" placeholder="Дополнительная информация..." rows="3"></textarea>
+                </div>
+                <button type="submit">📥 Добавить в таблицу</button>
+                <button type="button" onclick="showStep(2)" style="background: #6c757d; margin-top: 10px;">← Назад</button>
+            </form>
+        </div>
+
+        <!-- Шаг 4: Успех -->
+        <div id="step4" class="step">
+            <div class="success-message">
+                <div class="success-icon">✅</div>
+                <h2>Данные успешно добавлены!</h2>
+                <p>Информация была отправлена в вашу таблицу</p>
+                <button onclick="closeApp()">Готово</button>
+                <button onclick="showStep(3)" style="background: #17a2b8; margin-top: 10px;">Добавить еще</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        let selectedSheet = '';
+        
+        // Инициализация Mini App
+        tg.expand();
+        tg.enableClosingConfirmation();
+        
+        function showStep(stepNumber) {
+            // Скрываем все шаги
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            // Показываем нужный шаг
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+        }
+        
+        function analyzeTable() {
+            const url = document.getElementById('tableUrl').value;
+            if (!url) {
+                alert('Пожалуйста, введите ссылку на таблицу');
+                return;
+            }
+            
+            // Имитируем анализ таблицы (в реальности тут будет парсинг)
+            const mockSheets = ['Лист1', 'Основной', 'Данные', 'Мероприятия'];
+            displaySheets(mockSheets);
+            showStep(2);
+        }
+        
+        function displaySheets(sheets) {
+            const sheetList = document.getElementById('sheetList');
+            sheetList.innerHTML = '';
+            
+            sheets.forEach(sheet => {
+                const sheetItem = document.createElement('div');
+                sheetItem.className = 'sheet-item';
+                sheetItem.textContent = sheet;
+                sheetItem.onclick = function() {
+                    // Убираем выделение у всех
+                    document.querySelectorAll('.sheet-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    // Выделяем выбранный
+                    this.classList.add('selected');
+                    selectedSheet = sheet;
+                };
+                sheetList.appendChild(sheetItem);
+            });
+        }
+        
+        function showDataForm() {
+            if (!selectedSheet) {
+                alert('Пожалуйста, выберите лист');
+                return;
+            }
+            showStep(3);
+        }
+        
+        // Обработка формы
+        document.getElementById('dataForm').onsubmit = function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                sheet: selectedSheet,
+                fio: formData.get('fio'),
+                date: formData.get('date'),
+                time: formData.get('time'),
+                topic: formData.get('topic'),
+                status: formData.get('status'),
+                note: formData.get('note') || '—'
+            };
+            
+            // Отправляем данные в бота
+            tg.sendData(JSON.stringify(data));
+            
+            // Показываем экран успеха
+            showStep(4);
+            
+            return false;
+        };
+        
+        function closeApp() {
+            tg.close();
+        }
+        
+        // Устанавливаем сегодняшнюю дату по умолчанию
+        document.querySelector('input[name="date"]').valueAsDate = new Date();
+    </script>
+</body>
+</html>
